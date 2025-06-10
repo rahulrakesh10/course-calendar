@@ -1,23 +1,18 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import FileUpload from './components/FileUpload';
+import TextPreview from './components/TextPreview';
+import CalendarView from './components/CalendarView'; 
 
 function App() {
+  const [extractedText, setExtractedText] = useState('');
+  const [events, setEvents] = useState([]); 
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="App" style={{ padding: '2rem' }}>
+      <h1>📚 Course Outline Calendar</h1>
+      <FileUpload setExtractedText={setExtractedText} setEvents={setEvents} />
+      <TextPreview text={extractedText} />
+      <CalendarView events={events} />
     </div>
   );
 }
