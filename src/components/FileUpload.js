@@ -1,18 +1,8 @@
 import React from 'react';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
+import { extractDatesFromText } from '../utils/dateExtractor.js'; // make sure this path is correct
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
-
-import { extractDatesFromText } from '../utils/dateExtractor'; // Add this import at the top
-
-// Inside reader.onload after setExtractedText(text):
-const events = extractDatesFromText(text).map((event) => ({
-  title: event.title,
-  start: event.date.toISOString().split('T')[0], // Format: YYYY-MM-DD
-}));
-setEvents(events);
-
-
 
 function FileUpload({ setExtractedText, setEvents }) {
   const handleFileUpload = async (event) => {
@@ -37,8 +27,15 @@ function FileUpload({ setExtractedText, setEvents }) {
         text += pageText + '\n';
       }
 
+      // Set extracted text for preview
       setExtractedText(text);
-      // We'll handle date extraction in a future step
+
+      // ✅ Extract dates and create calendar events
+      const events = extractDatesFromText(text).map((event) => ({
+        title: event.title,
+        start: event.date.toISOString().split('T')[0], // Format: YYYY-MM-DD
+      }));
+      setEvents(events);
     };
 
     reader.readAsArrayBuffer(file);
