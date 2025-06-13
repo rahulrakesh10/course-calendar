@@ -1,9 +1,7 @@
 import { parse } from 'chrono-node';
 
 export function extractDatesFromText(text) {
-  const results = parse(text);
-
-  // 1. Detect most common 4-digit number (likely course code)
+  const lines = text.split(/[\n.]/); // split by line or sentence
   const courseCodeMatch = text.match(/\b\d{4}\b/g) || [];
   const frequencyMap = {};
 
@@ -14,33 +12,47 @@ export function extractDatesFromText(text) {
   const mostFrequentCode = Object.entries(frequencyMap)
     .sort((a, b) => b[1] - a[1])[0]?.[0] || null;
 
-  // Optional: look for course prefix like CS/STAT/BIO/etc
   const coursePrefixMatch = text.match(/\b[A-Z]{2,4}\s?(\d{4})\b/);
   const coursePrefix = coursePrefixMatch ? coursePrefixMatch[0].replace(/\s+/g, '') : `Course ${mostFrequentCode}`;
 
-  return results
-    .map((result) => {
-      const contextWindow = 80;
-      const start = Math.max(0, result.index - contextWindow);
-      const end = Math.min(text.length, result.index + result.text.length + contextWindow);
-      const snippet = text.slice(start, end).replace(/\n/g, ' ').toLowerCase();
+  const seen = new Set();
+  const events = [];
 
-      // Filter to relevant events
-      if (!/due|midterm|final exam|test|exam/.test(snippet)) return null;
+  for (const fragment of lines) {
+    const subText = fragment.trim();
+    if (!subText) continue;
 
-      // Label priority
-      if (snippet.includes('final exam')) return { title: `${coursePrefix} – Final Exam`, date: result.start.date() };
-      if (snippet.includes('midterm')) return { title: `${coursePrefix} – Midterm`, date: result.start.date() };
-      if (snippet.includes('test')) return { title: `${coursePrefix} – Test`, date: result.start.date() };
-      if (snippet.includes('exam')) return { title: `${coursePrefix} – Exam`, date: result.start.date() };
+    const results = parse(subText);
+    for (const result of results) {
+      const snippet = subText.toLowerCase();
 
-      const match = snippet.match(/(assignment|project|quiz)\s*\d*\s*due/i);
-      const shortTitle = match ? match[0].trim() : 'Due Date';
+      if (!/due|midterm|final exam|test|exam/.test(snippet)) continue;
 
-      return {
-        title: `${coursePrefix} – ${shortTitle.charAt(0).toUpperCase() + shortTitle.slice(1)}`,
-        date: result.start.date(),
-      };
-    })
-    .filter(Boolean);
+      let label = '';
+      if (snippet.includes('final exam')) label = 'Final Exam';
+      else if (snippet.includes('midterm')) label = 'Midterm';
+      else if (snippet.includes('test')) label = 'Test';
+      else if (snippet.includes('exam')) label = 'Exam';
+      else {
+        const match = snippet.match(/(assignment|project|quiz)\s*\d*\s*due/i);
+        if (match) {
+          label = match[0].trim().replace(/\s+/g, ' ');
+          label = label.charAt(0).toUpperCase() + label.slice(1);
+        }
+      }
+
+      if (label) {
+        const key = `${label}-${result.start.date().toDateString()}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          events.push({
+            title: `${coursePrefix} – ${label}`,
+            date: result.start.date()
+          });
+        }
+      }
+    }
+  }
+
+  return events;
 }

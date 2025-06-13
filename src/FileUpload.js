@@ -1,6 +1,6 @@
 import React from 'react';
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf';
-import { extractDatesFromText } from '../utils/dateExtractor.js'; // make sure this path is correct
+import { extractDatesFromText } from './utils/dateExtractor.js'; // make sure this path is correct
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
 
