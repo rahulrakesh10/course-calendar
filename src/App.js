@@ -1,25 +1,30 @@
 import React, { useState } from 'react';
-import FileUpload from './FileUpload';
-import TextPreview from './TextPreview';
-import CalendarView from './CalendarView'; // your old one (optional)
-import EnhancedCalendar from './EnhancedCalendar'; // new advanced one
+import FileUpload from './components/FileUpload';
+import TextPreview from './components/TextPreview';
+import CalendarView from './components/CalendarView'; 
+import BigCalendarView from './BigCalendarView';
+import { extractDatesFromText } from './dateExtractor';
 
 function App() {
-  const [extractedText, setExtractedText] = useState('');
+  const [text, setText] = useState('');
   const [events, setEvents] = useState([]);
 
+  const handleTextExtracted = extractedText => {
+    setText(extractedText);
+    const parsed = extractDatesFromText(extractedText);
+    setEvents(parsed.map(ev => ({
+      title: ev.title,
+      start: ev.date,
+      end: ev.date
+    })));
+  };
+
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">📚 Course Calendar App</h1>
-
-      <FileUpload setExtractedText={setExtractedText} setEvents={setEvents} />
-      <TextPreview text={extractedText} />
-
-      {/* Your original basic calendar if you still want it */}
-      {/* <CalendarView events={events} /> */}
-
-      {/* NEW Enhanced Calendar */}
-      <EnhancedCalendar />
+    <div>
+      <FileUpload onTextExtracted={handleTextExtracted} />
+      <TextPreview text={text} />
+-     <CalendarView events={events} />
++     <BigCalendarView events={events} />
     </div>
   );
 }
